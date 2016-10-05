@@ -405,6 +405,12 @@ def get_h_data(code, start=None, end=None, autype='qfq',
     end = du.today() if end is None else end
     qs = du.get_quarts(start, end)
     qt = qs[0]
+    crr_qt = du.year_qua(du.today)
+
+    # same means we are in this quarter just temp cache
+    # else means it's past and we cache forever
+    cache_expr = int(qt[0] == crr_qt[0] and qt[1] == crr_qt[1]) \
+             * 3600 * 4
     ct._write_head()
     data = _parse_fq_data(_get_index_url(index, code, qt), index,
                           retry_count, pause)
