@@ -344,9 +344,14 @@ def get_realtime_quotes(symbols=None):
         symbols_list = _code_to_symbol(symbols)
         
     symbols_list = symbols_list[:-1] if len(symbols_list) > 8 else symbols_list 
-    request = Request(ct.LIVE_DATA_URL%(ct.P_TYPE['http'], ct.DOMAINS['sinahq'],
-                                                _random(), symbols_list))
-    text = urlopen(request,timeout=10).read()
+    url = ct.LIVE_DATA_URL%(ct.P_TYPE['http'], ct.DOMAINS['sinahq'],
+            _random(), symbols_list)
+    c = cache({"debug": False})
+    text = c.get(url, prefix="ts_rt_")
+    if not text:
+        request = Request(url)
+        text = urlopen(request,timeout=10).read()
+        c.set(url, text, 300, prefix="ts_rt_")
     text = text.decode('GBK')
     reg = re.compile(r'\="(.*?)\";')
     data = reg.findall(text)
@@ -493,17 +498,22 @@ def get_h_data(code, start=None, end=None, autype='qfq',
 
 def _parase_fq_factor(code, start, end):
     symbol = _code_to_symbol(code)
-    request = Request(ct.HIST_FQ_FACTOR_URL%(ct.P_TYPE['http'],
-                                             ct.DOMAINS['vsf'], symbol))
-    text = urlopen(request, timeout=10).read()
-    text = text[1:len(text)-1]
-    text = text.decode('utf-8') if ct.PY3 else text
-    text = text.replace('{_', '{"')
-    text = text.replace('total', '"total"')
-    text = text.replace('data', '"data"')
-    text = text.replace(':"', '":"')
-    text = text.replace('",_', '","')
-    text = text.replace('_', '-')
+    url = ct.HIST_FQ_FACTOR_URL%(ct.P_TYPE['http'],
+            ct.DOMAINS['vsf'], symbol)
+    c = cache({"debug": False})
+    text = c.get(url, prefix="ts_factor_")
+    if not text:
+        request = Request(url)
+        text = urlopen(request, timeout=10).read()
+        text = text[1:len(text)-1]
+        text = text.decode('utf-8') if ct.PY3 else text
+        text = text.replace('{_', '{"')
+        text = text.replace('total', '"total"')
+        text = text.replace('data', '"data"')
+        text = text.replace(':"', '":"')
+        text = text.replace('",_', '","')
+        text = text.replace('_', '-')
+        c.set(url, text, 3600*8, prefix="ts_factor_")
     text = json.loads(text)
     df = pd.DataFrame({'date':list(text['data'].keys()), 'factor':list(text['data'].values())})
     df['date'] = df['date'].map(_fun_except) # for null case
@@ -525,11 +535,12 @@ def _parse_fq_data(url, index, retry_count, pause, cache_expr=3600):
     for _ in range(retry_count):
         time.sleep(pause)
         try:
-            print url, cache_expr
+            print url[-25:], cache_expr
             c = cache({"debug": False})
             text = c.get(url)
             if not text:
                 request = Request(url)
+                print "downloading..."
                 text = urlopen(request, timeout=10).read()
                 c.set(url, text, cache_expr)
             text = text.decode('GBK')
