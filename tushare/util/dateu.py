@@ -84,19 +84,21 @@ def is_holiday(date):
             判断是否为交易日，返回True or False
     '''
     c = cache({"debug": False})
-    ret = c.get(date, prefix="ts_dt_")
+    ret = c.get("holiday", prefix="ts_dt_")
     if not ret:
         df = trade_cal()
         holiday = df[df.isOpen == 0]['calendarDate'].values
-        if isinstance(date, str):
-            today = datetime.datetime.strptime(date, '%Y-%m-%d')
+        data = ",".join(holiday)
+        c.set("holiday", data, 600, prefix="ts_dt_")
 
-        if today.isoweekday() in [6, 7] or date in holiday:
-            ret = 1
-        else:
-            ret = 2
-        c.set(date, ret, 0, prefix="ts_dt_")
-    return True if ret == 1 else False
+    holiday = ret.split(",")
+    if isinstance(date, str):
+        today = datetime.datetime.strptime(date, '%Y-%m-%d')
+
+    if today.isoweekday() in [6, 7] or date in holiday:
+        return True
+    else:
+        return False
 
 
 def last_tddate():
