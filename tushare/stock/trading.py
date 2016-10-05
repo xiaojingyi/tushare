@@ -405,7 +405,7 @@ def get_h_data(code, start=None, end=None, autype='qfq',
     end = du.today() if end is None else end
     qs = du.get_quarts(start, end)
     qt = qs[0]
-    crr_qt = du.year_qua(du.today)
+    crr_qt = du.year_qua(du.today())
 
     # same means we are in this quarter just temp cache
     # else means it's past and we cache forever
@@ -413,13 +413,16 @@ def get_h_data(code, start=None, end=None, autype='qfq',
              * 3600 * 4
     ct._write_head()
     data = _parse_fq_data(_get_index_url(index, code, qt), index,
-                          retry_count, pause)
+                          retry_count, pause, cache_expr)
     if len(qs)>1:
         for d in range(1, len(qs)):
             qt = qs[d]
+            cache_expr = int( qt[0] == crr_qt[0] 
+                    and qt[1] == crr_qt[1]) \
+                            * 3600 * 4
             ct._write_console()
             df = _parse_fq_data(_get_index_url(index, code, qt), index,
-                                retry_count, pause)
+                                retry_count, pause, cache_expr)
             if df is None:  # 可能df为空，退出循环
                 break
             else:
@@ -522,13 +525,14 @@ def _parse_fq_data(url, index, retry_count, pause, cache_expr=3600):
     for _ in range(retry_count):
         time.sleep(pause)
         try:
+            print url, cache_expr
             c = cache({"debug": False})
             text = c.get(url)
             if not text:
                 request = Request(url)
                 text = urlopen(request, timeout=10).read()
-                text = text.decode('GBK')
                 c.set(url, text, cache_expr)
+            text = text.decode('GBK')
             html = lxml.html.parse(StringIO(text))
             res = html.xpath('//table[@id=\"FundHoldSharesTable\"]')
             if ct.PY3:
