@@ -15,6 +15,7 @@ from lxml import etree
 import pandas as pd
 import numpy as np
 from tushare.stock import cons as ct
+from tushare.stock import cache
 import re
 from pandas.compat import StringIO
 from tushare.util import dateu as du
@@ -511,13 +512,17 @@ def _fun_except(x):
         return x
 
 
-def _parse_fq_data(url, index, retry_count, pause):
+def _parse_fq_data(url, index, retry_count, pause, cache_expr=3600):
     for _ in range(retry_count):
         time.sleep(pause)
         try:
-            request = Request(url)
-            text = urlopen(request, timeout=10).read()
-            text = text.decode('GBK')
+            c = new cache({"debug": False})
+            text = c.get(url)
+            if not text:
+                request = Request(url)
+                text = urlopen(request, timeout=10).read()
+                text = text.decode('GBK')
+                c.set(url, text, cache_expr)
             html = lxml.html.parse(StringIO(text))
             res = html.xpath('//table[@id=\"FundHoldSharesTable\"]')
             if ct.PY3:
