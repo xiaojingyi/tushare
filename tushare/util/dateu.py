@@ -4,6 +4,7 @@ import datetime
 import time
 import pandas as pd
 from tushare.stock import cons as ct
+from tushare.stock.cache import cache
 
 def year_qua(date):
     mon = date[5:7]
@@ -82,15 +83,20 @@ def is_holiday(date):
     '''
             判断是否为交易日，返回True or False
     '''
-    df = trade_cal()
-    holiday = df[df.isOpen == 0]['calendarDate'].values
-    if isinstance(date, str):
-        today = datetime.datetime.strptime(date, '%Y-%m-%d')
+    c = cache({"debug": False})
+    ret = c.get(date, prefix="ts_dt_")
+    if not ret:
+        df = trade_cal()
+        holiday = df[df.isOpen == 0]['calendarDate'].values
+        if isinstance(date, str):
+            today = datetime.datetime.strptime(date, '%Y-%m-%d')
 
-    if today.isoweekday() in [6, 7] or date in holiday:
-        return True
-    else:
-        return False
+        if today.isoweekday() in [6, 7] or date in holiday:
+            ret = 1
+        else:
+            ret = 2
+        c.set(date, ret, 0, prefix="ts_dt_")
+    return True if ret == 1 else False
 
 
 def last_tddate():
