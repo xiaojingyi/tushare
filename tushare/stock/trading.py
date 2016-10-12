@@ -24,7 +24,7 @@ try:
 except ImportError:
     from urllib2 import urlopen, Request
 
-
+timeout = 20
 def get_hist_data(code=None, start=None, end=None,
                   ktype='D', retry_count=3,
                   pause=0.001):
@@ -64,7 +64,7 @@ def get_hist_data(code=None, start=None, end=None,
         time.sleep(pause)
         try:
             request = Request(url)
-            lines = urlopen(request, timeout = 10).read()
+            lines = urlopen(request, timeout = timeout).read()
             if len(lines) < 15: #no data
                 return None
         except Exception as e:
@@ -109,7 +109,7 @@ def _parsing_dayprice_json(pageNum=1):
     ct._write_console()
     request = Request(ct.SINA_DAY_PRICE_URL%(ct.P_TYPE['http'], ct.DOMAINS['vsf'],
                                  ct.PAGES['jv'], pageNum))
-    text = urlopen(request, timeout=10).read()
+    text = urlopen(request, timeout=timeout).read()
     if text == 'null':
         return None
     reg = re.compile(r'\,(.*?)\:') 
@@ -154,7 +154,7 @@ def get_tick_data(code=None, date=None, retry_count=3, pause=0.001):
         try:
             re = Request(ct.TICK_PRICE_URL % (ct.P_TYPE['http'], ct.DOMAINS['sf'], ct.PAGES['dl'],
                                 date, symbol))
-            lines = urlopen(re, timeout=10).read()
+            lines = urlopen(re, timeout=timeout).read()
             lines = lines.decode('GBK') 
             if len(lines) < 20:
                 return None
@@ -194,7 +194,7 @@ def get_sina_dd(code=None, date=None, vol=400, retry_count=3, pause=0.001):
         try:
             re = Request(ct.SINA_DD % (ct.P_TYPE['http'], ct.DOMAINS['vsf'], ct.PAGES['sinadd'],
                                 symbol, vol, date))
-            lines = urlopen(re, timeout=10).read()
+            lines = urlopen(re, timeout=timeout).read()
             lines = lines.decode('GBK') 
             if len(lines) < 100:
                 return None
@@ -235,7 +235,7 @@ def get_today_ticks(code=None, retry_count=3, pause=0.001):
             request = Request(ct.TODAY_TICKS_PAGE_URL % (ct.P_TYPE['http'], ct.DOMAINS['vsf'],
                                                        ct.PAGES['jv'], date,
                                                        symbol))
-            data_str = urlopen(request, timeout=10).read()
+            data_str = urlopen(request, timeout=timeout).read()
             data_str = data_str.decode('GBK')
             data_str = data_str[1:-1]
             data_str = eval(data_str, type('Dummy', (dict,), 
@@ -350,7 +350,7 @@ def get_realtime_quotes(symbols=None):
     text = c.get(symbols, prefix="ts_rt_")
     if not text:
         request = Request(url)
-        text = urlopen(request,timeout=10).read()
+        text = urlopen(request,timeout=timeout).read()
         c.set(symbols, text, 120, prefix="ts_rt_")
     text = text.decode('GBK')
     reg = re.compile(r'\="(.*?)\";')
@@ -504,7 +504,7 @@ def _parase_fq_factor(code, start, end):
     text = c.get(url, prefix="ts_factor_")
     if not text:
         request = Request(url)
-        text = urlopen(request, timeout=10).read()
+        text = urlopen(request, timeout=timeout).read()
         text = text[1:len(text)-1]
         text = text.decode('utf-8') if ct.PY3 else text
         text = text.replace('{_', '{"')
@@ -541,7 +541,7 @@ def _parse_fq_data(url, index, retry_count, pause, cache_expr=3600):
             if not text:
                 request = Request(url)
                 print "downloading..."
-                text = urlopen(request, timeout=10).read()
+                text = urlopen(request, timeout=timeout).read()
                 c.set(url, text, cache_expr)
             text = text.decode('GBK')
             html = lxml.html.parse(StringIO(text))
@@ -593,7 +593,7 @@ def get_index():
     """
     request = Request(ct.INDEX_HQ_URL%(ct.P_TYPE['http'],
                                              ct.DOMAINS['sinahq']))
-    text = urlopen(request, timeout=10).read()
+    text = urlopen(request, timeout=timeout).read()
     text = text.decode('GBK')
     text = text.replace('var hq_str_sh', '').replace('var hq_str_sz', '')
     text = text.replace('";', '').replace('"', '').replace('=', ',')
