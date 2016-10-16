@@ -347,11 +347,16 @@ def get_realtime_quotes(symbols=None):
     url = ct.LIVE_DATA_URL%(ct.P_TYPE['http'], ct.DOMAINS['sinahq'],
             _random(), symbols_list)
     c = cache({"debug": False})
-    text = c.get(symbols, prefix="ts_rt_")
+    k = ""
+    if isinstance(symbols, str):
+        k = symbols
+    else:
+        k = "_".join(symbols)
+    text = c.get(k, prefix="ts_rt_")
     if not text:
         request = Request(url)
         text = urlopen(request,timeout=timeout).read()
-        c.set(symbols, text, 120, prefix="ts_rt_")
+        c.set(k, text, 120, prefix="ts_rt_")
     text = text.decode('GBK')
     reg = re.compile(r'\="(.*?)\";')
     data = reg.findall(text)
