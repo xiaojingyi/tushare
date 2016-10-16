@@ -20,6 +20,9 @@ from tushare.util import upass as up
 class TraderAPI(object):
     """
     股票实盘交易接口
+    提醒：本文涉及的思路和内容仅限于量化投资及程序化交易的研究与尝试，不作为个人或机构常规程序化交易的依据，
+    不对实盘的交易风险和政策风险产生的影响负责，如有问题请与我联系。
+    投资有风险，下单须谨慎。
     """
     def __init__(self, broker = ''):
         if broker == '':
@@ -79,9 +82,9 @@ class TraderAPI(object):
                     self.check_account_live(response)
                 except:
                     self._login('')
-                time.sleep(10)
+                time.sleep(100)
             else:
-                time.sleep(1)
+                time.sleep(10)
 
 
     def heartbeat(self):
@@ -189,6 +192,22 @@ class TraderAPI(object):
     
     
     def entrust_list(self):
+        """
+       获取委托单列表
+       return:DataFrame
+       ----------
+       ordersno:委托单号
+       stkcode:证券代码
+       stkname:证券名称
+       bsflagState:买卖标志
+       orderqty:委托数量
+       matchqty:成交数量
+       orderprice:委托价格
+       operdate:交易日期
+       opertime:交易时间
+       orderdate:下单日期
+       state:状态
+        """
         txtdata = self.s.get(vs.ENTRUST_LIST_URL % (vs.P_TYPE['https'], 
                                                     vs.DOMAINS['csc'], 
                                                     vs.PAGES['entrustlist'],
@@ -208,6 +227,8 @@ class TraderAPI(object):
         
         return: DataFrame
         -----------
+        ordersno:委托单号
+        matchcode:成交编号
         trddate:交易日期
         matchtime:交易时间
         stkcode:证券代码
@@ -254,8 +275,9 @@ class TraderAPI(object):
                                
             )
             result = self.s.post(vs.CANCEL_URL % (vs.P_TYPE['https'], vs.DOMAINS['csc'], vs.PAGES['cancel']), 
-                            params = params)   
-            return result.text
+                            params = params)
+            jsonobj = utils.get_jdata(result.text)  
+            return jsonobj['msgMap']['ResultSucess']
         return None
     
     

@@ -55,9 +55,3 @@ def get_broker(broker=''):
     
 def remove_broker():
     os.remove(BK)
-    
-if __name__ == '__main__':
-    set_broker('zxjt', user='38745171', passwd='710626')
-#     print(get_broker('zxjt'))
-#     print(base64.decodestring(str(get_broker('zxjt')['passwd'][0])))
-#     print(remove_broker())
