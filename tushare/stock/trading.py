@@ -356,7 +356,7 @@ def get_realtime_quotes(symbols=None):
     if not text:
         request = Request(url)
         text = urlopen(request,timeout=timeout).read()
-        c.set(k, text, 120, prefix="ts_rt_")
+        c.set(k, text, 20, prefix="ts_rt_")
     text = text.decode('GBK')
     reg = re.compile(r'\="(.*?)\";')
     data = reg.findall(text)
